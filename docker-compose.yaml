@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  mysqlDB:
+    container_name: "mysqlDB"
+    image: "mysql:8.0"
+    environment:
+      MYSQL_ROOT_PASSWORD: "lafabrica"
+      MYSQL_PASSWORD: "lafabrica"
+      MYSQL_DATABASE: "lafabrica"
+      MYSQL_USER: "lafabrica"
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql:/var/lib/mysql"
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      retries: 5
+      timeout: 10s
+
+  app:
+    container_name: "la_fabrica"
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysqlDB
+    environment:
+      - DATABASE_URL=jdbc:mysql://mysqlDB:3306/lafabrica?autoReconnect=true&useSSL=false&serverTimezone=UTC
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=lafabrica
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+    external: false
+
+networks:
+  app-network:
